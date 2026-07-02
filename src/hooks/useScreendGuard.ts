@@ -1,38 +1,31 @@
-import { useEffect, useState } from 'react';
-import * as LocalAuthentication from 'expo-local-authentication';
-import { useNavigationState } from '@react-navigation/native';
+import { useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../contexts/AuthContext';
 
-export function useScreenGuard(screenName: string) {
-  const navigationState = useNavigationState(state => state);
-  const [sessionTime, setSessionTime] = useState<number>(0);
+export interface ScreenGuardOptions {
+  required?: boolean;
+  timeout?: number;
+}
 
-  async function handleAuthentication() {
-    const auth = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Sessão Expirada'
-    });
-
-    if(auth.success) {
-        setSessionTime(0);
-    }else {
-      handleAuthentication();
-    }
-  }
+export function useScreenGuard(screenName: string, options?: ScreenGuardOptions) {
+  const { lock, resetSession, isLocked, config, updateConfig } = useAuth();
+  const navigation = useNavigation();
 
   useEffect(() => {
-    if(sessionTime < 10) {
-      const timer = setTimeout(() => {
-        setSessionTime(prevState => prevState + 1);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }else {
-      if(navigationState.routes) {
-        const currentScreen = navigationState.routes[navigationState.index];
-
-        if(currentScreen.name === screenName) {
-          handleAuthentication();
-        }
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (options?.required) {
+        lock();
       }
-    }
-  }, [sessionTime]);
+
+      resetSession();
+
+      if (options?.timeout && options.timeout !== config.maxSessionTime) {
+        updateConfig({ maxSessionTime: options.timeout });
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, lock, resetSession, options?.timeout, options?.required, config.maxSessionTime, updateConfig]);
+
+  return { isLocked };
 }

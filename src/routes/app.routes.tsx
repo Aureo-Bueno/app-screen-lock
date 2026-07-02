@@ -1,14 +1,14 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ScreenA } from '../screens/ScreenA';
-import { ScreenB } from '../screens/ScreenB';
+import { Home } from '../screens/Home';
+import { Dashboard } from '../screens/Dashboard';
 
 const { Navigator, Screen } = createNativeStackNavigator();
 
 export function AppRoutes() {
   return(
     <Navigator screenOptions={{ headerShown: false }}>
-        <Screen name='screenA' component={ScreenA} />
-        <Screen name='screenB' component={ScreenB} />
+        <Screen name='Home' component={Home} />
+        <Screen name='Dashboard' component={Dashboard} />
     </Navigator>
   );
 }
